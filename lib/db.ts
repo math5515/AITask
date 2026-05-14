@@ -28,6 +28,11 @@ function getDb(): Database.Database {
         BEGIN
           UPDATE tasks SET updated_at = datetime('now') WHERE id = OLD.id;
         END;
+
+      CREATE TABLE IF NOT EXISTS settings (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
     `);
   }
   return _db;
@@ -83,3 +88,17 @@ export function deleteTask(id: number): boolean {
   const result = db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
   return result.changes > 0;
 }
+
+export function getInProgressTasks(): Task[] {
+  const db = getDb();
+  return db.prepare(`SELECT * FROM tasks WHERE status = 'in_progress' ORDER BY created_at DESC`).all() as Task[];
+}
+
+export function getRecentlyDoneTasks(): Task[] {
+  const db = getDb();
+  return db.prepare(
+    `SELECT * FROM tasks WHERE status = 'done' AND updated_at >= datetime('now', '-24 hours')
+     ORDER BY updated_at DESC`
+  ).all() as Task[];
+}
+

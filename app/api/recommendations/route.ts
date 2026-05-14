@@ -22,10 +22,12 @@ export async function GET() {
     status: t.status,
   }));
 
-  const response = await anthropic.messages.create({
-    model: MODEL,
-    max_tokens: 1024,
-    system: `You are a productivity coach for a senior software developer.
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system: `You are a productivity coach for a senior software developer.
 Given their open task list, recommend exactly ${count} tasks to work on RIGHT NOW.
 Today is ${today}.
 
@@ -39,11 +41,14 @@ Respond ONLY with a valid JSON array of exactly ${count} objects. No markdown fe
 Schema: [{"taskId": number, "title": string, "reasoning": string, "urgencyScore": number}]
 - reasoning: 1–2 sentences, be specific and actionable
 - urgencyScore: integer 1–10`,
-    messages: [{
-      role: 'user',
-      content: `My open tasks:\n${JSON.stringify(taskSummary, null, 2)}\n\nWhat should I work on next?`,
-    }],
-  });
+      messages: [{
+        role: 'user',
+        content: `My open tasks:\n${JSON.stringify(taskSummary, null, 2)}\n\nWhat should I work on next?`,
+      }],
+    });
+  } catch {
+    return Response.json({ recommendations: [] });
+  }
 
   const block = response.content[0];
   if (block.type !== 'text') {

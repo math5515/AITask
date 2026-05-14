@@ -81,7 +81,7 @@ export default function InputPanel({ onTaskAdded }: Props) {
           onChange={e => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Paste a Slack message or email here…"
-          className="w-full h-44 bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-indigo-500 transition-colors font-mono leading-relaxed"
+          className="w-full h-32 md:h-44 bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-indigo-500 transition-colors font-mono leading-relaxed"
         />
 
         <button
@@ -140,6 +140,7 @@ export default function InputPanel({ onTaskAdded }: Props) {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
