@@ -56,7 +56,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-dvh flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-center gap-3 px-5 py-2.5 border-b border-zinc-800 bg-zinc-950">
         <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center text-white text-sm font-bold select-none">
           T
