@@ -1,9 +1,13 @@
+import { auth } from '@clerk/nextjs/server';
 import { getOpenTasks } from '@/lib/db';
 import { anthropic, MODEL } from '@/lib/claude';
 import type { Recommendation } from '@/lib/types';
 
 export async function GET() {
-  const tasks = getOpenTasks();
+  const { userId } = await auth();
+  if (!userId) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const tasks = await getOpenTasks(userId);
 
   if (tasks.length === 0) {
     return Response.json({ recommendations: [] });

@@ -1,5 +1,6 @@
 export interface Task {
   id: number;
+  user_id: string;
   title: string;
   priority: 'high' | 'medium' | 'low';
   hours: number;

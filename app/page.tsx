@@ -6,6 +6,7 @@ import InputPanel from '@/components/InputPanel';
 import TaskList from '@/components/TaskList';
 import RecommendationPanel from '@/components/RecommendationPanel';
 import StandupModal from '@/components/StandupModal';
+import { UserButton } from '@clerk/nextjs';
 
 type MobileTab = 'input' | 'tasks' | 'recs';
 
@@ -63,7 +64,7 @@ export default function Home() {
         </div>
         <span className="text-sm font-semibold text-zinc-100">TaskFlow</span>
         <span className="text-xs text-zinc-600 hidden sm:block">Personal task manager</span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => setShowStandup(true)}
             className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-zinc-800"
@@ -73,6 +74,7 @@ export default function Home() {
             </svg>
             Standup
           </button>
+          <UserButton />
         </div>
       </header>
 
