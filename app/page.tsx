@@ -7,9 +7,16 @@ import TaskList from '@/components/TaskList';
 import RecommendationPanel from '@/components/RecommendationPanel';
 import StandupModal from '@/components/StandupModal';
 import TitanicGame from '@/components/TitanicGame';
+import GraveyardModal, { saveToGraveyard } from '@/components/GraveyardModal';
+import HoroscopeModal from '@/components/HoroscopeModal';
+import SpinWheelModal from '@/components/SpinWheelModal';
+import BossBattleModal from '@/components/BossBattleModal';
+import ShameModal from '@/components/ShameModal';
+import FunMenu, { type FunFeature } from '@/components/FunMenu';
 import { UserButton } from '@clerk/nextjs';
 
 type MobileTab = 'input' | 'tasks' | 'recs';
+type Modal = 'standup' | 'titanic' | 'graveyard' | 'horoscope' | 'wheel' | 'boss' | 'shame' | null;
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,8 +24,7 @@ export default function Home() {
   const [recLoading, setRecLoading] = useState(false);
   const [highlightedTaskIds, setHighlightedTaskIds] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<MobileTab>('input');
-  const [showStandup, setShowStandup] = useState(false);
-  const [showTitanic, setShowTitanic] = useState(false);
+  const [modal, setModal] = useState<Modal>(null);
   const logoClicksRef = useRef<number[]>([]);
 
   useEffect(() => {
@@ -49,14 +55,32 @@ export default function Home() {
   }
 
   function handleTaskUpdated(updated: Task) {
+    if (updated.status === 'done') {
+      const prev = tasks.find(t => t.id === updated.id);
+      if (prev && prev.status !== 'done') saveToGraveyard(updated, 'completed');
+    }
     setTasks(prev => prev.map(t => (t.id === updated.id ? updated : t)));
     fetchRecommendations();
   }
 
   function handleTaskDeleted(id: number) {
+    const task = tasks.find(t => t.id === id);
+    if (task) saveToGraveyard(task, 'deleted');
     setTasks(prev => prev.filter(t => t.id !== id));
     setHighlightedTaskIds(prev => prev.filter(i => i !== id));
     fetchRecommendations();
+  }
+
+  async function handleCompleteTask(id: number) {
+    const res = await fetch(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'done' }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      handleTaskUpdated(data.task);
+    }
   }
 
   function handleLogoClick() {
@@ -64,9 +88,15 @@ export default function Home() {
     logoClicksRef.current = [...logoClicksRef.current, now].filter(t => now - t < 2000);
     if (logoClicksRef.current.length >= 5) {
       logoClicksRef.current = [];
-      setShowTitanic(true);
+      setModal('titanic');
     }
   }
+
+  function handleFunSelect(feature: FunFeature) {
+    setModal(feature);
+  }
+
+  function closeModal() { setModal(null); }
 
   return (
     <div className="h-dvh flex flex-col overflow-hidden">
@@ -81,7 +111,7 @@ export default function Home() {
         <span className="text-xs text-zinc-600 hidden sm:block">Personal task manager</span>
         <div className="ml-auto flex items-center gap-2">
           <button
-            onClick={() => setShowStandup(true)}
+            onClick={() => setModal('standup')}
             className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-200 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-zinc-800"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -89,6 +119,7 @@ export default function Home() {
             </svg>
             Standup
           </button>
+          <FunMenu onSelect={handleFunSelect} />
           <UserButton />
         </div>
       </header>
@@ -172,8 +203,14 @@ export default function Home() {
         </button>
       </nav>
 
-      {showStandup && <StandupModal onClose={() => setShowStandup(false)} />}
-      {showTitanic && <TitanicGame onClose={() => setShowTitanic(false)} />}
+      {/* Modals */}
+      {modal === 'standup'   && <StandupModal onClose={closeModal} />}
+      {modal === 'titanic'   && <TitanicGame onClose={closeModal} />}
+      {modal === 'graveyard' && <GraveyardModal onClose={closeModal} />}
+      {modal === 'horoscope' && <HoroscopeModal onClose={closeModal} />}
+      {modal === 'wheel'     && <SpinWheelModal tasks={tasks} onClose={closeModal} />}
+      {modal === 'boss'      && <BossBattleModal tasks={tasks} onCompleteTask={handleCompleteTask} onClose={closeModal} />}
+      {modal === 'shame'     && <ShameModal tasks={tasks} onClose={closeModal} />}
     </div>
   );
 }
