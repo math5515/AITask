@@ -1,10 +1,10 @@
-import { anthropic, MODEL } from './claude';
+import { anthropic, MODEL, withRetry } from './claude';
 import type { ExtractedTask } from './types';
 
 export async function extractTaskFromMessage(message: string): Promise<ExtractedTask> {
   const today = new Date().toISOString().split('T')[0];
 
-  const response = await anthropic.messages.create({
+  const response = await withRetry(() => anthropic.messages.create({
     model: MODEL,
     max_tokens: 512,
     system: `You are a task extraction assistant for a senior software developer.
@@ -20,7 +20,7 @@ Rules:
 
 Schema: {"title": string, "priority": "high"|"medium"|"low", "hours": number, "deadline": string|null, "requester": string|null}`,
     messages: [{ role: 'user', content: `Extract the task from this message:\n\n${message}` }],
-  });
+  }));
 
   const block = response.content[0];
   if (block.type !== 'text') throw new Error('Unexpected AI response type');

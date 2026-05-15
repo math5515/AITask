@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { getOpenTasks } from '@/lib/db';
-import { anthropic, MODEL } from '@/lib/claude';
+import { anthropic, MODEL, withRetry } from '@/lib/claude';
 import type { Recommendation } from '@/lib/types';
 
 export async function GET() {
@@ -28,7 +28,7 @@ export async function GET() {
 
   let response;
   try {
-    response = await anthropic.messages.create({
+    response = await withRetry(() => anthropic.messages.create({
       model: MODEL,
       max_tokens: 1024,
       system: `You are a productivity coach for a senior software developer.
@@ -49,7 +49,7 @@ Schema: [{"taskId": number, "title": string, "reasoning": string, "urgencyScore"
         role: 'user',
         content: `My open tasks:\n${JSON.stringify(taskSummary, null, 2)}\n\nWhat should I work on next?`,
       }],
-    });
+    }));
   } catch {
     return Response.json({ recommendations: [] });
   }

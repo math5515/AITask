@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { getOpenTasks } from '@/lib/db';
-import { anthropic, MODEL } from '@/lib/claude';
+import { anthropic, MODEL, withRetry } from '@/lib/claude';
 
 export async function GET() {
   const { userId } = await auth();
@@ -18,7 +18,7 @@ export async function GET() {
   let horoscope = 'The stars refuse to comment on your task list today. Try again tomorrow.';
 
   try {
-    const response = await anthropic.messages.create({
+    const response = await withRetry(() => anthropic.messages.create({
       model: MODEL,
       max_tokens: 400,
       system: `You are a mystical productivity oracle who speaks in the style of an absurdly dramatic astrology horoscope.
@@ -30,7 +30,7 @@ Be funny, mildly roast-y, and dramatic. 3–4 sentences max. No markdown. Plain 
         role: 'user',
         content: `My open tasks:\n${taskSummary}\n\nGive me my productivity horoscope for today.`,
       }],
-    });
+    }));
 
     const block = response.content[0];
     if (block.type === 'text') horoscope = block.text;
