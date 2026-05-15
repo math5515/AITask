@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Task, Recommendation } from '@/lib/types';
 import InputPanel from '@/components/InputPanel';
 import TaskList from '@/components/TaskList';
 import RecommendationPanel from '@/components/RecommendationPanel';
 import StandupModal from '@/components/StandupModal';
+import TitanicGame from '@/components/TitanicGame';
 import { UserButton } from '@clerk/nextjs';
 
 type MobileTab = 'input' | 'tasks' | 'recs';
@@ -17,6 +18,8 @@ export default function Home() {
   const [highlightedTaskIds, setHighlightedTaskIds] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<MobileTab>('input');
   const [showStandup, setShowStandup] = useState(false);
+  const [showTitanic, setShowTitanic] = useState(false);
+  const logoClicksRef = useRef<number[]>([]);
 
   useEffect(() => {
     fetch('/api/tasks')
@@ -56,10 +59,22 @@ export default function Home() {
     fetchRecommendations();
   }
 
+  function handleLogoClick() {
+    const now = Date.now();
+    logoClicksRef.current = [...logoClicksRef.current, now].filter(t => now - t < 2000);
+    if (logoClicksRef.current.length >= 5) {
+      logoClicksRef.current = [];
+      setShowTitanic(true);
+    }
+  }
+
   return (
     <div className="h-dvh flex flex-col overflow-hidden">
       <header className="shrink-0 flex items-center gap-3 px-5 py-2.5 border-b border-zinc-800 bg-zinc-950">
-        <div className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center text-white text-sm font-bold select-none">
+        <div
+          onClick={handleLogoClick}
+          className="w-7 h-7 bg-indigo-600 rounded-md flex items-center justify-center text-white text-sm font-bold select-none cursor-pointer"
+        >
           T
         </div>
         <span className="text-sm font-semibold text-zinc-100">TaskFlow</span>
@@ -158,6 +173,7 @@ export default function Home() {
       </nav>
 
       {showStandup && <StandupModal onClose={() => setShowStandup(false)} />}
+      {showTitanic && <TitanicGame onClose={() => setShowTitanic(false)} />}
     </div>
   );
 }
